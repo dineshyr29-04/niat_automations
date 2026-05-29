@@ -174,6 +174,42 @@ def submit_article():
                     logger.info(f"Navigating to {URL}")
                     page.goto(URL, wait_until="domcontentloaded")
 
+                    # Check if login page is present
+                    logger.info("Checking for login page...")
+                    login_phone_field = page.query_selector("#login-phone")
+                    
+                    if login_phone_field:
+                        logger.info("Login page detected - attempting login...")
+                        
+                        # Get credentials from environment
+                        phone = os.getenv("LOGIN_PHONE")
+                        password = os.getenv("LOGIN_PASSWORD")
+                        
+                        if not phone or not password:
+                            raise Exception("LOGIN_PHONE and LOGIN_PASSWORD environment variables not set")
+                        
+                        # Fill phone number
+                        logger.info("Filling phone number...")
+                        page.fill("#login-phone", phone)
+                        
+                        # Fill password
+                        logger.info("Filling password...")
+                        page.fill("#login-password", password)
+                        
+                        # Click login button
+                        logger.info("Clicking login button...")
+                        page.click('button[type="submit"]')
+                        
+                        # Wait for login to complete (redirect to main page)
+                        logger.info("Waiting for login to complete...")
+                        page.wait_for_url("**/contribute/write", timeout=15000)
+                        
+                        # Extra wait for page to stabilize
+                        page.wait_for_timeout(3000)
+                        logger.info("Login successful!")
+                    else:
+                        logger.info("Already logged in or login page not found")
+
                     # Wait for the select element (reduced timeout)
                     logger.info("Waiting for form elements...")
                     page.wait_for_selector("select#section-select", timeout=10000, state="attached")
@@ -208,7 +244,7 @@ def submit_article():
                     context.close()
         
         # Attempt submission with retries
-        retry_with_backoff(attempt_submission, max_retries=3, base_delay=10)
+        retry_with_backoff(attempt_submission, max_retries=2, base_delay=2)
         logger.info("Submission completed successfully")
         return True
         
