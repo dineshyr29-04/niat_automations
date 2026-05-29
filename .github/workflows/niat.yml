@@ -2,7 +2,7 @@ name: NIAT Insider Automation
 
 on:
   schedule:
-    - cron: "0 * * * *" # Every hour (more reliable than */10)
+    - cron: "*/10 * * * *" # Every 10 minutes
   workflow_dispatch: # Manual trigger option
   push:
     branches: [main]
