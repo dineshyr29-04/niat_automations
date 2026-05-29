@@ -22,12 +22,12 @@ Go to your GitHub repo → Settings → Secrets and variables → Actions → Ne
 
 Add these 4 secrets:
 
-| Secret Name | Value |
-|------------|-------|
-| `GROQ_API_KEY` | Your Groq API key from https://console.groq.com |
-| `ALERT_EMAIL_FROM` | Your Gmail address |
-| `ALERT_EMAIL_PASSWORD` | Your Gmail app password (not regular password) |
-| `ALERT_EMAIL_TO` | Email to receive alerts |
+| Secret Name            | Value                                           |
+| ---------------------- | ----------------------------------------------- |
+| `GROQ_API_KEY`         | Your Groq API key from https://console.groq.com |
+| `ALERT_EMAIL_FROM`     | Your Gmail address                              |
+| `ALERT_EMAIL_PASSWORD` | Your Gmail app password (not regular password)  |
+| `ALERT_EMAIL_TO`       | Email to receive alerts                         |
 
 ### 3. Enable Workflows
 
@@ -48,7 +48,7 @@ Add these 4 secrets:
 ✅ AI-generated unique content  
 ✅ Error handling & retries  
 ✅ Email notifications on failure  
-✅ Completely free  
+✅ Completely free
 
 ## Monitoring
 
