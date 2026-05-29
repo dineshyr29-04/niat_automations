@@ -139,4 +139,4 @@ while True:
         print("Error:", e)
 
     # 10 minutes
-    time.sleep(450)
+    time.sleep(480)
