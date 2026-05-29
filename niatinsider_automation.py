@@ -173,6 +173,10 @@ def submit_article():
                 try:
                     logger.info(f"Navigating to {URL}")
                     page.goto(URL, wait_until="domcontentloaded")
+                    
+                    # Wait for page to fully load (ensure form elements appear)
+                    logger.info("Waiting for page to load completely...")
+                    page.wait_for_load_state("networkidle", timeout=15000)
 
                     # Check if login page is present
                     logger.info("Checking for login page...")
@@ -212,7 +216,7 @@ def submit_article():
 
                     # Wait for the select element (reduced timeout)
                     logger.info("Waiting for form elements...")
-                    page.wait_for_selector("select#section-select", timeout=10000, state="attached")
+                    page.wait_for_selector("select#section-select", timeout=20000, state="attached")
 
                     # Category dropdown - Career & Wins
                     logger.info("Selecting category...")
