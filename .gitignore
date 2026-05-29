@@ -1,0 +1,30 @@
+# Logs
+niat_automation_logs/
+*.log
+
+# Firefox profile
+/tmp/firefox_profile/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
