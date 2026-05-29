@@ -8,6 +8,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import traceback
+import threading
 
 URL = "https://www.niatinsider.com/contribute/write"
 
@@ -30,34 +31,39 @@ logger = logging.getLogger(__name__)
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def send_alert_email(subject, body):
-    """Send email alert on critical failures."""
-    try:
-        email_user = os.getenv("ALERT_EMAIL_FROM")
-        email_password = os.getenv("ALERT_EMAIL_PASSWORD")
-        email_to = os.getenv("ALERT_EMAIL_TO")
-        
-        if not all([email_user, email_password, email_to]):
-            logger.warning("Email credentials not configured, skipping alert")
-            return
-        
-        msg = MIMEMultipart()
-        msg['From'] = email_user
-        msg['To'] = email_to
-        msg['Subject'] = f"[NIAT Automation Alert] {subject}"
-        
-        msg.attach(MIMEText(body, 'plain'))
-        
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(email_user, email_password)
-        server.send_message(msg)
-        server.quit()
-        
-        logger.info("Alert email sent successfully")
-    except Exception as e:
-        logger.error(f"Failed to send alert email: {e}")
+    """Send email alert on critical failures (non-blocking)."""
+    def _send():
+        try:
+            email_user = os.getenv("ALERT_EMAIL_FROM")
+            email_password = os.getenv("ALERT_EMAIL_PASSWORD")
+            email_to = os.getenv("ALERT_EMAIL_TO")
+            
+            if not all([email_user, email_password, email_to]):
+                logger.warning("Email credentials not configured, skipping alert")
+                return
+            
+            msg = MIMEMultipart()
+            msg['From'] = email_user
+            msg['To'] = email_to
+            msg['Subject'] = f"[NIAT Automation Alert] {subject}"
+            
+            msg.attach(MIMEText(body, 'plain'))
+            
+            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
+            server.starttls()
+            server.login(email_user, email_password)
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info("Alert email sent successfully")
+        except Exception as e:
+            logger.error(f"Failed to send alert email: {e}")
+    
+    # Send email in background thread to not block execution
+    thread = threading.Thread(target=_send, daemon=True)
+    thread.start()
 
-def retry_with_backoff(func, max_retries=3, base_delay=5):
+def retry_with_backoff(func, max_retries=2, base_delay=2):
     """Retry function with exponential backoff."""
     for attempt in range(max_retries):
         try:
@@ -159,23 +165,18 @@ def submit_article():
                 logger.info("Launching Firefox...")
                 context = p.firefox.launch_persistent_context(
                     user_data_dir="/tmp/firefox_profile",
-                    headless=False
+                    headless=True
                 )
 
                 page = context.new_page()
                 
                 try:
                     logger.info(f"Navigating to {URL}")
-                    page.goto(URL)
+                    page.goto(URL, wait_until="domcontentloaded")
 
-                    # Wait for page to fully load
-                    logger.info("Waiting for page to load...")
-                    page.wait_for_load_state("networkidle", timeout=20000)
-                    page.wait_for_timeout(3000)
-
-                    # Wait for the select element
+                    # Wait for the select element (reduced timeout)
                     logger.info("Waiting for form elements...")
-                    page.wait_for_selector("select#section-select", timeout=20000, state="attached")
+                    page.wait_for_selector("select#section-select", timeout=10000, state="attached")
 
                     # Category dropdown - Career & Wins
                     logger.info("Selecting category...")
@@ -200,7 +201,7 @@ def submit_article():
                     logger.info("Clicking submit button...")
                     page.click('button:has-text("Submit for Review")')
 
-                    page.wait_for_timeout(5000)
+                    page.wait_for_timeout(2000)
                     logger.info("Article submitted successfully!")
                     
                 finally:
@@ -228,34 +229,19 @@ if __name__ == "__main__":
     logger.info(f"Logs will be saved to: {log_file}")
     logger.info("="*60)
     
-    submission_count = 0
-    failed_count = 0
-    
-    while True:
-        try:
-            logger.info(f"\n--- Submission #{submission_count + 1} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---")
-            
-            if submit_article():
-                submission_count += 1
-                logger.info(f"Total successful submissions: {submission_count}")
-            else:
-                failed_count += 1
-                logger.warning(f"Total failed submissions: {failed_count}")
-            
-            # Wait 10 minutes before next submission
-            logger.info("Waiting 10 minutes before next submission...")
-            time.sleep(600)
-            
-        except KeyboardInterrupt:
-            logger.info("Automation stopped by user")
-            logger.info(f"Final stats - Successful: {submission_count}, Failed: {failed_count}")
-            break
-        except Exception as e:
-            logger.error(f"Unexpected error in main loop: {e}\n{traceback.format_exc()}")
-            send_alert_email(
-                "Automation Process Crashed",
-                f"Unexpected error in main loop:\n\n{traceback.format_exc()}"
-            )
-            # Wait before retry
-            logger.info("Waiting 5 minutes before retry...")
-            time.sleep(300)
+    try:
+        logger.info(f"Submission at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        if submit_article():
+            logger.info("✓ Submission completed successfully")
+        else:
+            logger.error("✗ Submission failed")
+        
+    except KeyboardInterrupt:
+        logger.info("Automation stopped by user")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
+        send_alert_email(
+            "Automation Process Crashed",
+            f"Unexpected error:\n\n{traceback.format_exc()}"
+        )
