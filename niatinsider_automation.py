@@ -90,10 +90,13 @@ def submit_article():
 
         page.goto(URL)
 
-        page.wait_for_timeout(5000)
+        # Wait for page to fully load
+        page.wait_for_load_state("networkidle", timeout=20000)
 
-        # Wait for the select element to be available
-        page.wait_for_selector("select#section-select", timeout=15000)
+        page.wait_for_timeout(3000)
+
+        # Wait for the select element to be available with longer timeout
+        page.wait_for_selector("select#section-select", timeout=20000, state="attached")
 
         # Category dropdown - Career & Wins
         page.select_option(
@@ -136,4 +139,4 @@ while True:
         print("Error:", e)
 
     # 10 minutes
-    time.sleep(600)
+    time.sleep(360)
