@@ -1,53 +1,60 @@
 # NIAT Insider Automation
 
-Automatically generates and submits articles to NIAT Insider every 10 minutes using AI (Groq).
+Automatically generates and submits articles to NIAT Insider every 10 minutes using AI (Groq) with Playwright browser automation.
 
 ## Setup Instructions
 
-### 1. Create a GitHub Repository
+### 1. Install Dependencies
 
 ```bash
-cd ~/Desktop/niat_automations
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/niat-automation.git
-git push -u origin main
+pip install -r requirements.txt
 ```
 
-### 2. Add GitHub Secrets
+### 2. Set Environment Variable
 
-Go to your GitHub repo → Settings → Secrets and variables → Actions → New repository secret
+Export your Groq API key:
 
-Add these 4 secrets:
+```bash
+export GROQ_API_KEY="your-groq-api-key-here"
+```
 
-| Secret Name            | Value                                           |
-| ---------------------- | ----------------------------------------------- |
-| `GROQ_API_KEY`         | Your Groq API key from https://console.groq.com |
-| `ALERT_EMAIL_FROM`     | Your Gmail address                              |
-| `ALERT_EMAIL_PASSWORD` | Your Gmail app password (not regular password)  |
-| `ALERT_EMAIL_TO`       | Email to receive alerts                         |
+Get your Groq API key from: https://console.groq.com
 
-### 3. Enable Workflows
+### 3. Run the Script
 
-- Go to Actions tab
-- Click "I understand my workflows, go ahead and enable them"
+```bash
+python niatinsider_automation.py
+```
+
+The script will:
+
+- Launch Firefox browser (persistent session)
+- Generate unique article content using Groq AI
+- Submit to NIAT Insider "Career & Wins" section
+- Wait 10 minutes and repeat
+- Continue running until manually stopped
 
 ## How It Works
 
-- Runs **every 10 minutes** automatically via GitHub Actions (free tier: 144 runs/day)
-- Generates unique article content using Groq AI
-- Submits to NIAT Insider "Career & Wins" section
-- Emails alerts on failures
-- Logs all activity
+- Runs **every 10 minutes** in a continuous loop
+- Uses **Groq AI** (llama-3.1-8b-instant) to generate:
+  - Article title (career advancement focused)
+  - Article subtitle
+  - Article body (3-4 paragraphs)
+- Uses **Playwright** to automate browser interactions:
+  - Navigate to NIAT Insider contribution form
+  - Fill in generated content
+  - Submit article for review
+- Includes error handling and automatic retry on failures
 
 ## Features
 
-✅ 24/7 automated submissions  
-✅ AI-generated unique content  
-✅ Error handling & retries  
-✅ Email notifications on failure  
+✅ Continuous automated submissions (every 10 minutes)  
+✅ AI-generated unique content (Groq API)  
+✅ Browser automation with Firefox (Playwright)  
+✅ Error handling & automatic retry  
+✅ Persistent Firefox session  
+✅ Clean content formatting (removes markdown, quotes, etc.)  
 ✅ Completely free
 
 ## Monitoring

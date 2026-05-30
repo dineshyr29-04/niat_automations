@@ -165,7 +165,7 @@ def submit_article():
                 logger.info("Launching Firefox...")
                 context = p.firefox.launch_persistent_context(
                     user_data_dir="/tmp/firefox_profile",
-                    headless=True
+                    headless=False
                 )
 
                 page = context.new_page()
@@ -270,12 +270,21 @@ if __name__ == "__main__":
     logger.info("="*60)
     
     try:
-        logger.info(f"Submission at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        
-        if submit_article():
-            logger.info("✓ Submission completed successfully")
-        else:
-            logger.error("✗ Submission failed")
+        while True:
+            try:
+                logger.info(f"Submission at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                
+                if submit_article():
+                    logger.info("✓ Submission completed successfully")
+                else:
+                    logger.error("✗ Submission failed")
+                
+                logger.info("Waiting 10 minutes before next submission...")
+                time.sleep(600)  # 10 minutes
+                
+            except Exception as e:
+                logger.error(f"Error in submission cycle: {e}\n{traceback.format_exc()}")
+                time.sleep(600)  # Wait before retrying
         
     except KeyboardInterrupt:
         logger.info("Automation stopped by user")
