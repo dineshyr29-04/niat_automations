@@ -165,7 +165,7 @@ def submit_article():
                 logger.info("Launching Firefox...")
                 context = p.firefox.launch_persistent_context(
                     user_data_dir="/tmp/firefox_profile",
-                    headless=False
+                    headless=True
                 )
 
                 page = context.new_page()
